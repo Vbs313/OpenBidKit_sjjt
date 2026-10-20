@@ -364,14 +364,6 @@ npm run dist:mac    # macOS Intel / Apple Silicon DMG 和 ZIP
 
 ## Star History
 
-<a href="https://www.star-history.com/?repos=数据集团%2F数据集团工具箱&type=timeline&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="assets/star-history/star-history-dark.svg" />
-   <source media="(prefers-color-scheme: light)" srcset="assets/star-history/star-history-light.svg" />
-   <img alt="Star History Chart" src="assets/star-history/star-history-light.svg" />
- </picture>
-</a>
-
 ---
 
 <p align="center">

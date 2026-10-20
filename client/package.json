@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "数据集团工具箱独立桌面客户端",
-  "author": "数据集团",
+  "author": "mark / yibiaoai",
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
@@ -40,7 +40,7 @@
   "build": {
     "appId": "com.sjjt.bidtoolkit",
     "productName": "数据集团工具箱",
-    "copyright": "Copyright © 2026 数据集团",
+    "copyright": "Copyright (C) 2025-2026 mark / yibiaoai; Copyright (C) 2025-2026 数据集团",
     "asar": true,
     "directories": {
       "output": "release"

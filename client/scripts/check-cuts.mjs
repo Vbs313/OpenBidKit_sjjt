@@ -23,15 +23,20 @@ function warnReport(id, msg) { warn++; warnList.push(id + " :: " + msg); }
 for (const rel of manifest.requireAbsentFiles) {
   report(!fs.existsSync(path.join(A_DIR, rel)), "absent:" + rel, "文件被重新引入");
 }
+const lit = (a) => (a && a.expectParts ? a.expectParts.join("") : a && a.expect);
 // 2) package / 许可断言
 for (const a of manifest.asserts) {
   if (a.kind === "pkgDepAbsent") report(!(a.target in allDeps), a.id, "依赖被重新引入: " + a.target);
   if (a.kind === "pkgBuildKeyAbsent") report(!(pkg.build && a.target in pkg.build), a.id, "build." + a.target + " 被重新引入");
   if (a.kind === "pkgBuildEquals") report(pkg.build && pkg.build[a.target] === a.expect, a.id, "期望 " + a.expect + " 实际 " + (pkg.build ? pkg.build[a.target] : "undefined"));
-  if (a.kind === "pkgBuildContains") report(!!(pkg.build && String(pkg.build[a.target] || "").includes(a.expect)), a.id, "期望包含 " + a.expect);
+  if (a.kind === "pkgBuildContains") report(!!(pkg.build && String(pkg.build[a.target] || "").includes(lit(a))), a.id, "期望包含 " + a.expect);
   if (a.kind === "fileContains") {
     const p = path.join(A_DIR, a.target);
-    report(fs.existsSync(p) && fs.readFileSync(p, "utf8").includes(a.expect), a.id, "缺少 " + a.expect + " (" + a.target + ")");
+    report(fs.existsSync(p) && fs.readFileSync(p, "utf8").includes(lit(a)), a.id, "缺少 " + lit(a) + " (" + a.target + ")");
+  }
+  if (a.kind === "fileNotContains") {
+    const p = path.join(A_DIR, a.target);
+    report(fs.existsSync(p) && !fs.readFileSync(p, "utf8").includes(lit(a)), a.id, "不应出现 " + lit(a) + " (" + a.target + ")");
   }
 }
 // 3) 警告断言（不计阻断）
@@ -56,7 +61,27 @@ if (manifest.forbidTextInFiles) {
   })(path.join(A_DIR, ft.root));
   report(hits.length === 0, "ui.forbidden-text", "文案回流：" + hits.slice(0, 5).join(" | "));
 }
+// 4b) 仓库级品牌/归属禁用串扫描（仅跟踪文件，避免未跟踪脚本/构建产物误报）
+if (manifest.repoScan) {
+  const rs = manifest.repoScan;
+  const allow = new Set((rs.allowFiles || []).map((x) => path.normalize(x)));
+  const hits = [];
+  const tracked = execFileSync("git", ["-C", A_DIR, "ls-files", "-z"], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 })
+    .split("\0").filter(Boolean);
+  for (const rel of tracked) {
+    const norm = path.normalize(rel);
+    if (allow.has(norm)) continue;
+    const ext = path.extname(norm).toLowerCase();
+    if ([".exe",".dll",".so",".dylib",".pyc",".png",".jpg",".jpeg",".gif",".webp",".ico",".pdf",".zip",".msi",".whl",".nupkg",".node",".bin",".pdb",".map",".lock"].includes(ext)) continue;
+    let t = "";
+    try { t = fs.readFileSync(path.join(A_DIR, rel), "utf8"); } catch { continue; }
+    for (const pdef of rs.patterns) { const pat = Array.isArray(pdef) ? pdef.join("") : pdef; if (t.includes(pat)) hits.push(rel + " :: " + pat); }
+  }
+  report(hits.length === 0, "repo.forbidden-brand", "禁用串残留 " + hits.length + " 处：" + hits.slice(0, 8).join(" | "));
+}
+
 // 5) 产物断言（--artifacts）
+const joinForbid = (x) => (Array.isArray(x) ? x.join("") : x);
 if (process.argv.includes("--artifacts")) {
   const ac = manifest.artifactChecks;
   const dir = path.join(A_DIR, ac.dir);

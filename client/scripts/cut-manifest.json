@@ -127,16 +127,68 @@
       "expect": "GNU Affero General Public License v3.0 only"
     },
     {
-      "id": "notice.copyright",
-      "kind": "fileContains",
-      "target": "NOTICE",
-      "expect": "Copyright (C) 2025-2026 mark / yibiaoai"
-    },
-    {
       "id": "license.file",
       "kind": "fileContains",
       "target": "LICENSE",
       "expect": "GNU AFFERO GENERAL PUBLIC LICENSE"
+    },
+    {
+      "id": "notice.copyright-basis",
+      "kind": "fileContains",
+      "target": "NOTICE",
+      "expect": "Copyright (C) 2025-2026"
+    },
+    {
+      "id": "notice.copyright-holder",
+      "kind": "fileContains",
+      "target": "NOTICE",
+      "expect": "mark / yibiaoai"
+    },
+    {
+      "id": "notice.no-b-repo",
+      "kind": "fileNotContains",
+      "target": "NOTICE",
+      "expectParts": [
+        "FB",
+        "208/OpenBidKit",
+        "_Yibiao"
+      ]
+    },
+    {
+      "id": "notice.no-b-email",
+      "kind": "fileNotContains",
+      "target": "NOTICE",
+      "expectParts": [
+        "fb208",
+        "@outlook.com"
+      ]
+    },
+    {
+      "id": "notice.no-b-brand",
+      "kind": "fileNotContains",
+      "target": "NOTICE",
+      "expectParts": [
+        "易",
+        "标"
+      ]
+    },
+    {
+      "id": "notice.a-org",
+      "kind": "fileContains",
+      "target": "NOTICE",
+      "expect": "Copyright (C) 2025-2026 数据集团"
+    },
+    {
+      "id": "notice.a-source",
+      "kind": "fileContains",
+      "target": "NOTICE",
+      "expect": "https://github.com/Vbs313/OpenBidKit_sjjt"
+    },
+    {
+      "id": "notice.a-contact",
+      "kind": "fileContains",
+      "target": "NOTICE",
+      "expect": "gaorunyi@outlook.com"
     }
   ],
   "warns": [
@@ -162,7 +214,10 @@
     "productNameFrom": "client/package.json#build.productName",
     "authorFrom": "client/package.json#author",
     "forbidStrings": [
-      "OpenBidKit_Yibiao"
+      [
+        "OpenBidKit",
+        "_Yibiao"
+      ]
     ],
     "forbidAuthorExact": [
       "mark"
@@ -188,5 +243,27 @@
       ".tsx",
       ".ts"
     ]
+  },
+  "repoScan": {
+    "patterns": [
+      [
+        "OpenBidKit",
+        "_Yibiao"
+      ],
+      [
+        "FB",
+        "208"
+      ],
+      [
+        "fb208",
+        "@outlook.com"
+      ],
+      [
+        "易",
+        "标"
+      ]
+    ],
+    "allowFiles": [],
+    "note": "字面量拆分存储，避免扫描脚本自身被命中；NOTICE 版权行单独由 notice.* 断言校验"
   }
 }
