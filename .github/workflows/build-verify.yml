@@ -1,0 +1,85 @@
+name: Build Verify
+
+# 只做构建 + 产物断言，不含任何发布动作（无 secrets、无 publish、无 release 上传）
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "client/package.json"
+      - "client/package-lock.json"
+      - "client/patches/**"
+      - "client/scripts/check-cuts.mjs"
+      - "client/scripts/cut-manifest.json"
+      - "client/electron/**"
+      - "openxmlhelper/**"
+      - ".github/workflows/build-verify.yml"
+      - ".github/workflows/release.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ARTIFACT_RETENTION_DAYS: 7
+
+jobs:
+  verify-windows-artifacts:
+    name: Windows MSI branding verify
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: client/package-lock.json
+
+      - name: Cache electron-builder and electron downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/AppData/Local/electron-builder
+            ~/AppData/Local/electron/Cache
+          key: ${{ runner.os }}-eb-${{ hashFiles('client/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-eb-
+
+      - name: Install dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Build renderer
+        working-directory: client
+        run: npm run build
+
+      - name: Build Windows MSI (no publish)
+        working-directory: client
+        run: npx electron-builder --win msi --publish never --config.npmRebuild=false
+
+      - name: Verify artifact branding and attribution (FAIL must be 0)
+        shell: bash
+        run: |
+          set -o pipefail
+          node client/scripts/check-cuts.mjs "$GITHUB_WORKSPACE" --artifacts | tee cut-check.log
+          {
+            echo '### Artifact assertion result'
+            echo '~~~'
+            tail -n 20 cut-check.log
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload MSI evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: msi-verify
+          path: client/release/*.msi
+          if-no-files-found: warn
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}

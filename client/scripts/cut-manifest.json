@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-20",
+  "basis": {
+    "source": "OpenBidKit_sjjt 提交 fdcfe1d1 / d42488e4 / 07303092 / 4f11368a / 4a166393",
+    "diff": "v2.25.27..917629e（A 侧 36 个删除文件中的裁剪子集）"
+  },
+  "brand": {
+    "productName": "数据集团投标工具箱",
+    "artifactNamePattern": "数据集团投标工具箱-${version}-${os}-${arch}.${ext}",
+    "appId": "com.yibiao.openbidkit",
+    "appIdRisk": "appId 仍为 B 的 com.yibiao.openbidkit；若与 B 同机安装会共享数据目录/单实例锁，需产品确认是否改为独立 appId"
+  },
+  "removedDependencies": [
+    "electron-updater",
+    "undici",
+    "@radix-ui/react-separator"
+  ],
+  "requireAbsentFiles": [
+    "client/electron/ipc/licenseIpc.cjs",
+    "client/electron/services/licenseService.cjs",
+    "client/electron/resources/license-public-key.json",
+    "client/src/app/LicenseStatusPrompt.tsx",
+    "client/src/shared/ui/OfflineLicenseActivationDialog.tsx",
+    "client/electron/services/updateService.cjs",
+    "client/src/app/UpdateNotifier.tsx",
+    "client/src/shared/updateToast.ts",
+    "client/scripts/merge-mac-update-manifests.cjs",
+    "client/electron/services/agent/agentErrorReportProcess.cjs",
+    "client/electron/services/agent/agentErrorReporter.cjs",
+    "client/electron/services/agent/agentRuntimeAnalytics.cjs",
+    "client/src/shared/analytics/analytics.ts",
+    "client/electron/ipc/donationIpc.cjs",
+    "client/electron/services/donationService.cjs",
+    "client/src/shared/ui/DonationPromptProvider.tsx",
+    "client/src/styles/shared-donation.css",
+    "client/src/app/StartupAdvertisementDialog.tsx",
+    "client/electron/resources/build-attestation.json",
+    "client/scripts/generate-build-attestation.cjs",
+    "client/electron/utils/machineIdentity.cjs",
+    "client/src/shared/remoteNotice.ts",
+    "analytics/scripts/2026-08-26-new-client-investigation/analyze-local.mjs",
+    "analytics/scripts/2026-08-26-new-client-investigation/deploy-worker.mjs",
+    "analytics/scripts/2026-08-26-new-client-investigation/download-data.mjs",
+    "analytics/scripts/2026-08-26-new-client-investigation/export-ip-client-counts.mjs",
+    "analytics/scripts/2026-08-26-new-client-investigation/repair-2026-08-26.mjs",
+    "analytics/scripts/2026-08-26-new-client-investigation/repair-2026-08-27.mjs",
+    "tools/upload_atomgit_release.py"
+  ],
+  "groups": {
+    "授权验证": [
+      "client/electron/ipc/licenseIpc.cjs",
+      "client/electron/services/licenseService.cjs",
+      "client/electron/resources/license-public-key.json",
+      "client/src/app/LicenseStatusPrompt.tsx",
+      "client/src/shared/ui/OfflineLicenseActivationDialog.tsx"
+    ],
+    "自动更新": [
+      "client/electron/services/updateService.cjs",
+      "client/src/app/UpdateNotifier.tsx",
+      "client/src/shared/updateToast.ts",
+      "client/scripts/merge-mac-update-manifests.cjs"
+    ],
+    "遥测与错误上报": [
+      "client/electron/services/agent/agentErrorReportProcess.cjs",
+      "client/electron/services/agent/agentErrorReporter.cjs",
+      "client/electron/services/agent/agentRuntimeAnalytics.cjs",
+      "client/src/shared/analytics/analytics.ts"
+    ],
+    "赞助与开屏广告": [
+      "client/electron/ipc/donationIpc.cjs",
+      "client/electron/services/donationService.cjs",
+      "client/src/shared/ui/DonationPromptProvider.tsx",
+      "client/src/styles/shared-donation.css",
+      "client/src/app/StartupAdvertisementDialog.tsx"
+    ],
+    "构建证明与机器指纹": [
+      "client/electron/resources/build-attestation.json",
+      "client/scripts/generate-build-attestation.cjs",
+      "client/electron/utils/machineIdentity.cjs"
+    ],
+    "远程公告": [
+      "client/src/shared/remoteNotice.ts"
+    ],
+    "一次性分析与发布辅助脚本": [
+      "analytics/scripts/2026-08-26-new-client-investigation/analyze-local.mjs",
+      "analytics/scripts/2026-08-26-new-client-investigation/deploy-worker.mjs",
+      "analytics/scripts/2026-08-26-new-client-investigation/download-data.mjs",
+      "analytics/scripts/2026-08-26-new-client-investigation/export-ip-client-counts.mjs",
+      "analytics/scripts/2026-08-26-new-client-investigation/repair-2026-08-26.mjs",
+      "analytics/scripts/2026-08-26-new-client-investigation/repair-2026-08-27.mjs",
+      "tools/upload_atomgit_release.py"
+    ]
+  },
+  "asserts": [
+    {
+      "id": "deps.electron-updater",
+      "kind": "pkgDepAbsent",
+      "target": "electron-updater"
+    },
+    {
+      "id": "deps.undici",
+      "kind": "pkgDepAbsent",
+      "target": "undici"
+    },
+    {
+      "id": "build.publish",
+      "kind": "pkgBuildKeyAbsent",
+      "target": "publish"
+    },
+    {
+      "id": "build.productName",
+      "kind": "pkgBuildEquals",
+      "target": "productName",
+      "expect": "数据集团投标工具箱"
+    },
+    {
+      "id": "build.artifactName",
+      "kind": "pkgBuildContains",
+      "target": "artifactName",
+      "expect": "数据集团投标工具箱"
+    },
+    {
+      "id": "notice.license",
+      "kind": "fileContains",
+      "target": "NOTICE",
+      "expect": "GNU Affero General Public License v3.0 only"
+    },
+    {
+      "id": "notice.copyright",
+      "kind": "fileContains",
+      "target": "NOTICE",
+      "expect": "Copyright (C) 2025-2026 mark / yibiaoai"
+    },
+    {
+      "id": "license.file",
+      "kind": "fileContains",
+      "target": "LICENSE",
+      "expect": "GNU AFFERO GENERAL PUBLIC LICENSE"
+    }
+  ],
+  "warns": [
+    {
+      "id": "readme.brand",
+      "kind": "fileContains",
+      "target": "README.md",
+      "expect": "数据集团投标工具箱",
+      "note": "A 的 README 仍是 B 的品牌与赞助商内容"
+    },
+    {
+      "id": "agents.brand",
+      "kind": "fileContains",
+      "target": "AGENTS.md",
+      "expect": "数据集团",
+      "note": "工程约定文档需与产品名一致"
+    }
+  ],
+  "artifactChecks": {
+    "dir": "client/release",
+    "enabledByFlag": "--artifacts",
+    "requireWhenPresent": true,
+    "productNameFrom": "client/package.json#build.productName",
+    "authorFrom": "client/package.json#author",
+    "forbidStrings": [
+      "OpenBidKit_Yibiao"
+    ],
+    "forbidAuthorExact": [
+      "mark"
+    ],
+    "forbidCopyrightExact": [
+      "Copyright © 2026 mark",
+      "Copyright (c) 2026 mark"
+    ],
+    "note": "NOTICE 归属为 mark / yibiaoai，故禁止的是“裸 mark”字段值，而非子串 mark；避免误伤 markdown/bookmark 等"
+  },
+  "forbidTextInFiles": {
+    "note": "UI 文案层断言：裁剪后的入口不得以文案形式回流（不校验注释/文档）",
+    "root": "client/src",
+    "patterns": [
+      "检查更新",
+      "激活码",
+      "获取激活码",
+      "授权验证失败"
+    ],
+    "extensions": [
+      ".tsx",
+      ".ts"
+    ]
+  }
+}
