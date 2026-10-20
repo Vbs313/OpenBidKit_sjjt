@@ -61,6 +61,10 @@ jobs:
 
       - name: Build Windows MSI (no publish)
         working-directory: client
+        # USE_HARD_LINKS=false 作为符号链接 fallback：winCodeSign/electron 解压不建硬链接
+        # 若仍失败，降级为 --config.win.signAndEditExecutable=false（仅验证用途，不用于发布产物）
+        env:
+          USE_HARD_LINKS: "false"
         run: npx electron-builder --win msi --publish never --config.npmRebuild=false
 
       - name: Verify artifact branding and attribution (FAIL must be 0)
