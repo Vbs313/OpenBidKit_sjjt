@@ -25,6 +25,12 @@ const complianceCheckRegistry = {
     requiresModel: false,
     group: 'deposit',
   },
+  performance: {
+    label: '业绩要求核查',
+    description: '检查业绩要求与投标响应的数量/金额门槛、冲突声明，确定性规则，不调用模型。',
+    requiresModel: false,
+    group: 'verification',
+  },
   cross_check: {
     label: '评分项交叉对照',
     description: '逐项判断技术评分项在投标文件中的覆盖情况，需要已配置文本模型。',
