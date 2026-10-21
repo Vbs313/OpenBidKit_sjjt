@@ -188,10 +188,10 @@ jobs:
         run: npm run smoke:pages-mount
 
       - name: Build Windows NSIS and ZIP artifacts
-        run: npx electron-builder --win nsis zip --publish never -c.npmRebuild=false
+        run: npx electron-builder --win nsis zip --publish never --config.npmRebuild=false
 
       - name: Build Windows MSI artifact
-        run: npx electron-builder --win msi --publish never --config.npmRebuild=false --config.productName=DataGroupBidKit --config.extraMetadata.author=DataGroup --config.copyright="Copyright (C) 2025-2026 DataGroup" -c.extraMetadata.author=mark -c.copyright="Copyright (c) 2026 mark"
+        run: npx electron-builder --win msi --publish never --config.npmRebuild=false --config.productName=DataGroupBidKit --config.extraMetadata.author=DataGroup --config.copyright="Copyright (C) 2025-2026 DataGroup"
 
       - name: Verify artifact branding and attribution
         shell: bash
@@ -372,7 +372,7 @@ jobs:
 
           for attempt in 1 2 3; do
             echo "Build macOS ${{ matrix.arch }} artifacts, attempt ${attempt}/3."
-            if npx electron-builder --mac dmg:${{ matrix.arch }} zip:${{ matrix.arch }} --publish never -c.npmRebuild=false; then
+            if npx electron-builder --mac dmg:${{ matrix.arch }} zip:${{ matrix.arch }} --publish never --config.npmRebuild=false; then
               exit 0
             fi
 
