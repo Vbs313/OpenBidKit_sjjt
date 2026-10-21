@@ -169,7 +169,8 @@
     ],
     "forbidCopyrightExact": [
       "Copyright © 2026 mark",
-      "Copyright (c) 2026 mark"
+      "Copyright (c) 2026 mark",
+      "Copyright © 2026 数据集团"
     ],
     "note": "NOTICE 归属为 mark / yibiaoai，故禁止的是“裸 mark”字段值，而非子串 mark；避免误伤 markdown/bookmark 等；MSI 因 WiX 代码页 1252 使用 ASCII 产品名 DataGroupBidKit，NSIS/zip 保持中文品牌",
     "msiProductName": "DataGroupBidKit"
