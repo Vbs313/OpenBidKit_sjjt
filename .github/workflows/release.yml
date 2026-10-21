@@ -191,7 +191,7 @@ jobs:
         run: npx electron-builder --win nsis zip --publish never -c.npmRebuild=false
 
       - name: Build Windows MSI artifact
-        run: npx electron-builder --win msi --publish never -c.npmRebuild=false -c.productName=DataGroupBidKit -c.extraMetadata.author=mark -c.copyright="Copyright (c) 2026 mark"
+        run: npx electron-builder --win msi --publish never --config.npmRebuild=false --config.productName=DataGroupBidKit --config.extraMetadata.author=DataGroup --config.copyright="Copyright (C) 2025-2026 DataGroup" -c.extraMetadata.author=mark -c.copyright="Copyright (c) 2026 mark"
 
       - name: Verify artifact branding and attribution
         shell: bash

@@ -60,13 +60,19 @@ jobs:
         working-directory: client
         run: npm run build
 
-      - name: Build Windows MSI (no publish)
+      - name: Build Windows NSIS (no publish)
+        working-directory: client
+        env:
+          USE_HARD_LINKS: "false"
+        run: npx electron-builder --win nsis --publish never --config.npmRebuild=false
+
+      - name: Build Windows MSI (ASCII metadata, no publish)
         working-directory: client
         # USE_HARD_LINKS=false 作为符号链接 fallback：winCodeSign/electron 解压不建硬链接
         # 若仍失败，降级为 --config.win.signAndEditExecutable=false（仅验证用途，不用于发布产物）
         env:
           USE_HARD_LINKS: "false"
-        run: npx electron-builder --win msi --publish never --config.npmRebuild=false -c.productName=DataGroupBidKit
+        run: npx electron-builder --win msi --publish never --config.npmRebuild=false --config.productName=DataGroupBidKit --config.extraMetadata.author=DataGroup --config.copyright="Copyright (C) 2025-2026 DataGroup"
 
       - name: Verify artifact branding and attribution (FAIL must be 0)
         shell: bash
