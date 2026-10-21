@@ -265,5 +265,11 @@
     ],
     "allowFiles": [],
     "note": "字面量拆分存储，避免扫描脚本自身被命中；NOTICE 版权行单独由 notice.* 断言校验"
+  },
+  "innoChecks": {
+    "dir": "client/release/inno",
+    "prefix": "数据集团工具箱-Setup-",
+    "productName": "数据集团工具箱",
+    "note": "Inno 产物：存在性、ProductName、版权（禁止列表复用 artifactChecks.forbidCopyrightExact），且必须包含 Copyright (C) 2025-2026"
   }
 }

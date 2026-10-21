@@ -132,6 +132,30 @@ if (process.argv.includes("--artifacts")) {
   }
 }
 
+// 5b) Inno Setup 产物断言（--artifacts）
+if (process.argv.includes("--artifacts") && manifest.innoChecks) {
+  const ic = manifest.innoChecks;
+  const dir = path.join(A_DIR, ic.dir);
+  const arts = fs.existsSync(dir)
+    ? fs.readdirSync(dir).filter((f) => f.toLowerCase().endsWith(".exe") && f.startsWith(ic.prefix))
+    : [];
+  report(arts.length === 1, "artifact.inno.existence", "期望 1 个 Inno 安装包，实际 " + arts.length + " 个");
+  if (arts.length) {
+    const p = path.join(dir, arts[0]);
+    const q = p.replace(/'/g, "''");
+    try {
+      const raw = execFileSync("pwsh", ["-NoProfile", "-Command", "$vi=(Get-Item '" + q + "').VersionInfo; $vi | ConvertTo-Json -Compress"], { encoding: "utf8" });
+      const vi = JSON.parse(raw.trim() || "{}");
+      const innoProduct = String(vi.ProductName || "").trim();
+      report(innoProduct === ic.productName, "artifact.inno.productName", "期望 " + ic.productName + " 实际 " + innoProduct);
+      const forbid = (manifest.artifactChecks && manifest.artifactChecks.forbidCopyrightExact) || [];
+      const innoCopyright = String(vi.LegalCopyright || "").trim();
+      report(!forbid.includes(innoCopyright), "artifact.inno.copyright", "版权违规: " + innoCopyright);
+      report(innoCopyright.includes("Copyright (C) 2025-2026"), "artifact.inno.copyright-present", "LegalCopyright 缺失");
+    } catch (e) { warnReport("artifact.inno.metadata", "读取失败: " + e.message); }
+  }
+}
+
 console.log("== 汇总: PASS " + pass + " / FAIL " + fail + " / WARN " + warn + " ==");
 if (fail) { console.log("阻断项:"); failList.forEach(x => console.log("  - " + x)); }
 if (warn) { console.log("警告:"); warnList.forEach(x => console.log("  - " + x)); }
