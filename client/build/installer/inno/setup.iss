@@ -19,7 +19,8 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\..\..\release\inno
-OutputBaseFilename=数据集团工具箱-Setup-{#MyAppVersion}
+OutputBaseFilename=数据集团工具箱-Setup-{#MyAppVersion}-unsigned
+; 内网分发（C 方案）：产物 unsigned，文件名带 -unsigned 标识
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern

@@ -141,7 +141,7 @@ if (process.argv.includes("--artifacts") && manifest.innoChecks) {
     : [];
   report(arts.length === 1, "artifact.inno.existence", "期望 1 个 Inno 安装包，实际 " + arts.length + " 个");
   if (arts.length) {
-    report(/^数据集团工具箱-Setup-\d+\.\d+\.\d+\.exe$/.test(arts[0]), "artifact.inno.name", "命名不符: " + arts[0]);
+    report(/^数据集团工具箱-Setup-\d+\.\d+\.\d+(-unsigned)?\.exe$/.test(arts[0]), "artifact.inno.name", "命名不符: " + arts[0]);
     const p = path.join(dir, arts[0]);
     const q = p.replace(/'/g, "''");
     try {
