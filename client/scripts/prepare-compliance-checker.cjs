@@ -136,7 +136,27 @@ function buildTarget(platform, arch) {
 
     fs.rmSync(outputDir, { recursive: true, force: true });
     fs.mkdirSync(path.dirname(outputDir), { recursive: true });
-    fs.cpSync(builtDir, outputDir, { recursive: true });
+    // macOS 下 PyInstaller 6 的 _internal 里可能是符号链接（如 Python.framework/Python）；
+    // 必须 dereference 复制，否则产物里留下悬空链接，启动报 "Failed to load Python shared library"。
+    const builtInternal = path.join(builtDir, '_internal');
+    if (fs.existsSync(builtInternal)) {
+      const pythonLib = path.join(builtInternal, 'Python');
+      try {
+        const stat = fs.lstatSync(pythonLib);
+        const kind = stat.isSymbolicLink() ? 'symlink' : 'file';
+        const target = stat.isSymbolicLink() ? fs.readlinkSync(pythonLib) : '';
+        console.log(`[compliance-checker] _internal/Python: ${kind}${target ? ` -> ${target}` : ''}`);
+      } catch {
+        console.log('[compliance-checker] _internal/Python: missing');
+      }
+    }
+    fs.cpSync(builtDir, outputDir, { recursive: true, dereference: true });
+    if (fs.existsSync(builtInternal)) {
+      const copiedPython = path.join(outputDir, '_internal', 'Python');
+      if (!fs.existsSync(copiedPython)) {
+        throw new Error(`Sidecar 复制后缺少 _internal/Python：${copiedPython}`);
+      }
+    }
     if (platform !== 'win32') {
       fs.chmodSync(path.join(outputDir, executableName(platform)), 0o755);
     }

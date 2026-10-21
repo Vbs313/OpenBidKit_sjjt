@@ -64,7 +64,10 @@ function probeSidecarDirect(command, timeoutMs = 8000) {
       env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' },
     });
     const timer = setTimeout(() => {
+      // 先 SIGTERM 再 SIGKILL，并 unref，避免挂死的 sidecar 拖住 step 的 stdout 管道。
       try { child.kill(); } catch {}
+      setTimeout(() => { try { child.kill('SIGKILL'); } catch {} }, 1000);
+      try { child.unref(); } catch {}
       finish({ code: 'timeout', signal: null, stdout, stderr });
     }, timeoutMs);
     child.stdout.setEncoding('utf8');
