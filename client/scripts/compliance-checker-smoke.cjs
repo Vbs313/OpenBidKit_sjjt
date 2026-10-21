@@ -91,6 +91,14 @@ async function runSmoke() {
   try {
     const bundledChecker = resolveBundledCheckerPath();
     if (bundledChecker) {
+      const sidecarPythonLib = path.join(path.dirname(bundledChecker), '_internal', 'Python');
+      try {
+        const stat = fs.lstatSync(sidecarPythonLib);
+        const info = stat.isSymbolicLink() ? `symlink -> ${fs.readlinkSync(sidecarPythonLib)}` : (stat.isFile() ? 'file' : 'other');
+        console.log(`[compliance-smoke] _internal/Python 状态: ${info}`);
+      } catch (error) {
+        console.log(`[compliance-smoke] _internal/Python 状态: 缺失（${error.code || error.message}）`);
+      }
       const probe = await probeSidecarDirect(bundledChecker);
       const firstLine = String(probe.stdout || '').split('\n').find((line) => line.trim()) || '(空)';
       const probeStderr = String(probe.stderr || '').trim().slice(-2048) || '(空)';

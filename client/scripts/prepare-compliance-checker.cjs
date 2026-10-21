@@ -77,6 +77,39 @@ function ensurePyInstaller(python) {
   });
 }
 
+// macOS 的 _internal/Python 是符号链接（指向 Python.framework/...）。
+// cpSync 的 dereference 在部分 Node 版本上仍会保留链接或丢掉目标，这里做一次兜底：
+// 确保复制后是可直接 dlopen 的常规文件；若缺失，就在构建目录里搜 Python.framework 的实体并补拷。
+function ensurePythonLibFile(outputDir, builtDir) {
+  const target = path.join(outputDir, '_internal', 'Python');
+  const isRegular = (p) => {
+    try { return fs.statSync(p).isFile(); } catch { return false; }
+  };
+  if (isRegular(target)) {
+    console.log('[compliance-checker] _internal/Python 复制后为常规文件');
+    return;
+  }
+  const candidates = [];
+  const walk = (dir, depth) => {
+    if (depth > 6) return;
+    let entries = [];
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full, depth + 1);
+      else if (entry.name === 'Python' && full.includes('Python.framework')) candidates.push(full);
+    }
+  };
+  walk(builtDir, 0);
+  const source = candidates.find((item) => isRegular(item));
+  if (!source) {
+    throw new Error(`Sidecar 复制后缺少 _internal/Python，且构建目录内未找到 Python.framework 实体：${target}`);
+  }
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.copyFileSync(source, target);
+  console.log(`[compliance-checker] 已补拷 _internal/Python <- ${source}`);
+}
+
 function buildTarget(platform, arch) {
   const key = `${platform}-${arch}`;
   if (!fs.existsSync(ENTRY)) {
@@ -139,10 +172,12 @@ function buildTarget(platform, arch) {
     // macOS 下 PyInstaller 6 的 _internal 里可能是符号链接（如 Python.framework/Python）；
     // 必须 dereference 复制，否则产物里留下悬空链接，启动报 "Failed to load Python shared library"。
     const builtInternal = path.join(builtDir, '_internal');
+    let hadPythonLib = false;
     if (fs.existsSync(builtInternal)) {
       const pythonLib = path.join(builtInternal, 'Python');
       try {
         const stat = fs.lstatSync(pythonLib);
+        hadPythonLib = true;
         const kind = stat.isSymbolicLink() ? 'symlink' : 'file';
         const target = stat.isSymbolicLink() ? fs.readlinkSync(pythonLib) : '';
         console.log(`[compliance-checker] _internal/Python: ${kind}${target ? ` -> ${target}` : ''}`);
@@ -151,11 +186,8 @@ function buildTarget(platform, arch) {
       }
     }
     fs.cpSync(builtDir, outputDir, { recursive: true, dereference: true });
-    if (fs.existsSync(builtInternal)) {
-      const copiedPython = path.join(outputDir, '_internal', 'Python');
-      if (!fs.existsSync(copiedPython)) {
-        throw new Error(`Sidecar 复制后缺少 _internal/Python：${copiedPython}`);
-      }
+    if (hadPythonLib) {
+      ensurePythonLibFile(outputDir, builtDir);
     }
     if (platform !== 'win32') {
       fs.chmodSync(path.join(outputDir, executableName(platform)), 0o755);
