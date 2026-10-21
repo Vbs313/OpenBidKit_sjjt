@@ -8,6 +8,7 @@ process.stderr.on('error', (error) => { if (error?.code === 'EPIPE') process.exi
  * 用法：npm run smoke:compliance-checker
  */
 const crypto = require('node:crypto');
+const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -35,11 +36,64 @@ function writeFixture(dir, name, lines) {
   return target;
 }
 
+
+function resolveBundledCheckerPath() {
+  if (process.env.YIBIAO_COMPLIANCE_CHECKER_DIR) return null;
+  const exe = process.platform === 'win32' ? 'checker.exe' : 'checker';
+  return path.join(__dirname, '..', 'vendor', 'compliance-checker', `${process.platform}-${process.arch}`, exe);
+}
+
+// 直连探测：不经过服务层，先拿到 Sidecar 自身的 stdout/stderr/退出码。
+// 用于区分“能启动但检查项不一致”与“启动即失败”。
+function probeSidecarDirect(command, timeoutMs = 8000) {
+  return new Promise((resolve) => {
+    let settled = false;
+    let stdout = '';
+    let stderr = '';
+    const finish = (result) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try { child.stdin.destroy(); } catch {}
+      resolve(result);
+    };
+    const child = spawn(command, [], {
+      cwd: path.dirname(command),
+      stdio: ['pipe', 'pipe', 'pipe'],
+      windowsHide: true,
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' },
+    });
+    const timer = setTimeout(() => {
+      try { child.kill(); } catch {}
+      finish({ code: 'timeout', signal: null, stdout, stderr });
+    }, timeoutMs);
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => { stdout += chunk; });
+    child.stderr.on('data', (chunk) => { stderr += chunk; });
+    child.on('error', (error) => finish({ code: 'spawn-error', signal: null, stdout, stderr: `${stderr}${error.message}` }));
+    child.on('exit', (code, signal) => finish({ code, signal, stdout, stderr }));
+    try {
+      child.stdin.write(`${JSON.stringify({ job_id: 'probe-capabilities', action: 'ping' })}\n`, 'utf8');
+    } catch (error) {
+      finish({ code: 'stdin-error', signal: null, stdout, stderr: `${stderr}${error.message}` });
+    }
+  });
+}
+
 async function runSmoke() {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'yibiao-compliance-smoke-'));
   const service = createComplianceCheckerService({ app, configStore: { load: () => ({}) } });
   let database = null;
   try {
+    const bundledChecker = resolveBundledCheckerPath();
+    if (bundledChecker) {
+      const probe = await probeSidecarDirect(bundledChecker);
+      const firstLine = String(probe.stdout || '').split('\n').find((line) => line.trim()) || '(空)';
+      const probeStderr = String(probe.stderr || '').trim().slice(-2048) || '(空)';
+      console.log(`[compliance-smoke] 直连探测 code=${probe.code} signal=${probe.signal || 'null'} stdout=${firstLine.slice(0, 500)}`);
+      console.log(`[compliance-smoke] 直连探测 stderr=${probeStderr.replace(/\n/g, ' | ')}`);
+    }
     const userData = path.join(tempDir, 'userData');
     fs.mkdirSync(userData, { recursive: true });
     app.setPath('userData', userData);
@@ -59,6 +113,12 @@ async function runSmoke() {
     const expectedKind = process.env.YIBIAO_COMPLIANCE_CHECKER_DIR ? 'python' : 'bundled';
     assert(status.spawn_kind === expectedKind, `Sidecar 启动方式应为 ${expectedKind}，实际 ${status.spawn_kind}`);
     console.log(`[compliance-smoke] spawn_kind=${status.spawn_kind} command=${status.spawn_command}`);
+    const reportedIds = new Set(capabilities.map((item) => item.check_id).filter(Boolean));
+    const registeredIds = new Set(Object.keys(registry.complianceCheckRegistry));
+    const missingInSidecar = [...registeredIds].filter((id) => !reportedIds.has(id));
+    const missingInRegistry = [...reportedIds].filter((id) => !registeredIds.has(id));
+    assert(missingInSidecar.length === 0 && missingInRegistry.length === 0,
+      `Sidecar 与注册表检查项不一致：Sidecar 缺少 [${missingInSidecar.join(', ')}]；注册表缺少 [${missingInRegistry.join(', ')}]`);
     assert(capabilities.some((item) => item.check_id === 'validity'), 'Sidecar 未上报 validity 检查项');
     assert(capabilities.some((item) => item.check_id === 'deposit'), 'Sidecar 未上报 deposit 检查项');
     // 上报的 requires_model 必须与 B 侧注册表一致，否则页面会选错是否需要 model_config。

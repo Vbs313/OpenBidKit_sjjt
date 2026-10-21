@@ -59,6 +59,9 @@ function createComplianceCheckerService({ app, configStore, resolveChildEnv } = 
   let startingPromise = null;
   let closing = false;
   let terminationPromise = null;
+  // 诊断用：保留 Sidecar stderr 尾部，退出时随错误抛出（≤2KB），便于定位启动即失败。
+  let stderrTail = '';
+  const STDERR_TAIL_LIMIT = 2048;
 
   const logger = createDeveloperLogger({
     app,
@@ -179,7 +182,8 @@ function createComplianceCheckerService({ app, configStore, resolveChildEnv } = 
       lineReader.close();
       lineReader = null;
     }
-    rejectPending(new Error(`合规检查 Sidecar 已退出（code=${code ?? 'null'}, signal=${signal || 'null'}）`));
+    const stderrHint = stderrTail.trim();
+    rejectPending(new Error(`合规检查 Sidecar 已退出（code=${code ?? 'null'}, signal=${signal || 'null'}）${stderrHint ? `；stderr: ${stderrHint}` : '；stderr: (空)'}`));
     writeLog('checker.exit', { code, signal });
   }
 
@@ -195,6 +199,7 @@ function createComplianceCheckerService({ app, configStore, resolveChildEnv } = 
     } catch (error) {
       writeLog('checker.child_env_failed', { error: compactLogError(error) });
     }
+    stderrTail = '';
     startingPromise = new Promise((resolve, reject) => {
       const next = spawn(spec.command, spec.args, {
         cwd: spec.cwd,
@@ -215,7 +220,10 @@ function createComplianceCheckerService({ app, configStore, resolveChildEnv } = 
       lineReader.on('line', handleLine);
       next.stderr.on('data', (chunk) => {
         const message = String(chunk || '').trim();
-        if (message) writeLog('checker.stderr', { message });
+        if (message) {
+          writeLog('checker.stderr', { message });
+          stderrTail = `${stderrTail}${message}\n`.slice(-STDERR_TAIL_LIMIT);
+        }
       });
       next.once('spawn', () => {
         activeSpec = { command: spec.command, cwd: spec.cwd, kind: spec.kind || 'bundled' };
