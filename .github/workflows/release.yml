@@ -187,15 +187,36 @@ jobs:
       - name: Smoke test pages mount
         run: npm run smoke:pages-mount
 
-      - name: Build Windows NSIS and ZIP artifacts
+      # 过渡期回退格式：NSIS/ZIP 继续构建并上传，Inno 验收通过前不删除
+      - name: Build Windows NSIS and ZIP artifacts (fallback, keep)
         run: npx electron-builder --win nsis zip --publish never --config.npmRebuild=false
 
-      - name: Build Windows MSI artifact
+      # deprecated：MSI 仅保留兼容，后续阶段 5 视情况移除
+      - name: Build Windows MSI artifact (deprecated)
         run: npx electron-builder --win msi --publish never --config.npmRebuild=false --config.productName=DataGroupBidKit --config.extraMetadata.author=DataGroup --config.copyright="Copyright (C) 2025-2026 DataGroup"
+
+      - name: Install Inno Setup 6
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          $cands = @('C:\Program Files (x86)\Inno Setup 6\ISCC.exe', "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe")
+          $found = $cands | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $found) { throw 'ISCC.exe not found after install' }
+          Write-Output "ISCC=$found"
+
+      - name: Build Inno Setup installer
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          $cands = @('C:\Program Files (x86)\Inno Setup 6\ISCC.exe', "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe")
+          $iscc = $cands | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $iscc) { throw 'ISCC.exe not found' }
+          & $iscc 'build\installer\inno\setup.iss' "/DMyAppVersion=$version"
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed: $LASTEXITCODE" }
 
       - name: Verify artifact branding and attribution
         shell: bash
-        run: node client/scripts/check-cuts.mjs "$GITHUB_WORKSPACE" --artifacts
+        run: node scripts/check-cuts.mjs "$GITHUB_WORKSPACE" --artifacts
 
       - name: Verify packaged Agent tools
         run: node scripts/verify-packaged-agent-tools.cjs --platform win32 --arch x64 --release release
@@ -206,7 +227,7 @@ jobs:
           TAG_NAME: ${{ inputs.tag_name || github.ref_name }}
         run: |
           shopt -s nullglob
-          files=(release/*.exe release/*.msi release/*.zip release/*.yml)
+          files=(release/*.exe release/*.msi release/*.zip release/*.yml release/inno/*.exe)
           if [ ${#files[@]} -eq 0 ]; then
             echo "No release assets found."
             exit 1
