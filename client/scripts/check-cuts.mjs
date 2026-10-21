@@ -151,7 +151,7 @@ if (process.argv.includes("--artifacts") && manifest.innoChecks) {
       const forbid = (manifest.artifactChecks && manifest.artifactChecks.forbidCopyrightExact) || [];
       const innoCopyright = String(vi.LegalCopyright || "").trim();
       report(!forbid.includes(innoCopyright), "artifact.inno.copyright", "版权违规: " + innoCopyright);
-      report(innoCopyright.includes("Copyright (C) 2025-2026"), "artifact.inno.copyright-present", "LegalCopyright 缺失");
+      report(/Copyright\s*(\(C\)|©)\s*2025-2026/.test(innoCopyright), "artifact.inno.copyright-present", "LegalCopyright 缺失或未含 2025-2026: " + innoCopyright);
     } catch (e) { warnReport("artifact.inno.metadata", "读取失败: " + e.message); }
   }
 }
