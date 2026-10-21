@@ -82,13 +82,31 @@ function ensurePyInstaller(python) {
 // 确保复制后是可直接 dlopen 的常规文件；若缺失，就在构建目录里搜 Python.framework 的实体并补拷。
 function ensurePythonLibFile(outputDir, builtDir) {
   const target = path.join(outputDir, '_internal', 'Python');
-  const isRegular = (p) => {
-    try { return fs.statSync(p).isFile(); } catch { return false; }
-  };
-  if (isRegular(target)) {
+
+  // 关键：cpSync 的 dereference 在部分 Node 版本上对“指向文件的符号链接”不生效，
+  // 会把链接原样复制；而构建用的 scratch 目录随后会被删除，于是链接变成悬空。
+  // 这里用 lstat 判断，必要时把链接指向的实体复制成常规文件。
+  let linkStat = null;
+  try { linkStat = fs.lstatSync(target); } catch {}
+
+  if (linkStat?.isFile()) {
     console.log('[compliance-checker] _internal/Python 复制后为常规文件');
     return;
   }
+
+  if (linkStat?.isSymbolicLink()) {
+    try {
+      const realPath = fs.realpathSync(target);
+      fs.rmSync(target, { force: true });
+      fs.copyFileSync(realPath, target);
+      fs.chmodSync(target, 0o755);
+      console.log(`[compliance-checker] 已将 _internal/Python 符号链接实体化 <- ${realPath}`);
+      return;
+    } catch (error) {
+      console.log(`[compliance-checker] 符号链接实体化失败，改用搜索兜底：${error.message}`);
+    }
+  }
+
   const candidates = [];
   const walk = (dir, depth) => {
     if (depth > 6) return;
@@ -101,12 +119,16 @@ function ensurePythonLibFile(outputDir, builtDir) {
     }
   };
   walk(builtDir, 0);
-  const source = candidates.find((item) => isRegular(item));
+  const source = candidates.find((item) => {
+    try { return fs.statSync(item).isFile(); } catch { return false; }
+  });
   if (!source) {
     throw new Error(`Sidecar 复制后缺少 _internal/Python，且构建目录内未找到 Python.framework 实体：${target}`);
   }
   fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.rmSync(target, { force: true });
   fs.copyFileSync(source, target);
+  fs.chmodSync(target, 0o755);
   console.log(`[compliance-checker] 已补拷 _internal/Python <- ${source}`);
 }
 
