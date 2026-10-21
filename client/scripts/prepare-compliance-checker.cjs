@@ -123,10 +123,15 @@ function buildTarget(platform, arch) {
       },
     });
 
-    const builtDir = path.join(distDir, platform === 'win32' ? OUTPUT_NAME : `${OUTPUT_NAME}.dist`);
-    const builtExe = path.join(builtDir, executableName(platform));
-    if (!fs.existsSync(builtExe)) {
-      throw new Error(`PyInstaller 未生成预期产物：${builtExe}`);
+    // PyInstaller 5 产出 <name>.dist，PyInstaller 6 起产出 <name>；两种布局都探测。
+    const candidates = [
+      path.join(distDir, OUTPUT_NAME),
+      path.join(distDir, `${OUTPUT_NAME}.dist`),
+    ];
+    const builtDir = candidates.find((dir) => fs.existsSync(path.join(dir, executableName(platform))));
+    if (!builtDir) {
+      const expected = candidates.map((dir) => path.join(dir, executableName(platform))).join(' 或 ');
+      throw new Error(`PyInstaller 未生成预期产物：${expected}`);
     }
 
     fs.rmSync(outputDir, { recursive: true, force: true });
