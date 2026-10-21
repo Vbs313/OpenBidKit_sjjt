@@ -99,7 +99,8 @@ if (process.argv.includes("--artifacts")) {
     for (const p of arts) {
       const rel = path.relative(A_DIR, p).replace(/\\/g, "/");
       const buf = fs.readFileSync(p);
-      for (const s of ac.forbidStrings) {
+      for (const sdef of ac.forbidStrings) {
+        const s = joinForbid(sdef);
         const hit = buf.includes(Buffer.from(s, "utf8")) || buf.includes(Buffer.from(s, "utf16le"));
         report(!hit, "artifact.string:" + rel, "产物含禁用串 " + s);
       }
