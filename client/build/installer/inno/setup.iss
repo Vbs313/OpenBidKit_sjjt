@@ -25,6 +25,9 @@ SolidCompression=yes
 WizardStyle=modern
 SetupIconFile=..\..\..\assets\icon.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
+VersionInfoCompany={#MyAppPublisher}
+VersionInfoDescription={#MyAppName} 安装程序
+VersionInfoCopyright=Copyright (C) 2025-2026 mark / yibiaoai; Copyright (C) 2025-2026 数据集团
 ; 代码签名：阶段 0 未发现可用证书，暂不启用；启用时取消下一行注释并配置 /Ssigntool
 ; SignTool=signtool
 
