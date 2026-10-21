@@ -139,15 +139,6 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit --no-fund
 
-      - name: Run unit tests
-        run: npm test
-
-      - name: Verify module graph
-        run: npm run verify:module-graph
-
-      - name: Verify Agent tools
-        run: node scripts/verify-agent-tools.cjs --platform win32 --arch x64
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -163,6 +154,15 @@ jobs:
       - name: Prepare compliance checker
         if: steps.cache-compliance-checker.outputs.cache-hit != 'true'
         run: node scripts/prepare-compliance-checker.cjs --platform win32 --arch x64
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Verify module graph
+        run: npm run verify:module-graph
+
+      - name: Verify Agent tools
+        run: node scripts/verify-agent-tools.cjs --platform win32 --arch x64
 
       - name: Smoke test compliance checker (Sidecar + SQLite)
         run: npm run smoke:compliance-checker
