@@ -61,6 +61,8 @@ if (process.argv.includes("--artifacts")) {
   const ac = manifest.artifactChecks;
   const dir = path.join(A_DIR, ac.dir);
   const expectProduct = pkg.build.productName;
+  // MSI 受 WiX 代码页 1252 限制，使用 ASCII 产品名；NSIS/zip 仍用中文品牌。
+  const expectProductFor = (file) => (String(file).toLowerCase().endsWith(".msi") ? (ac.msiProductName || expectProduct) : expectProduct);
   if (!fs.existsSync(dir)) {
     warnReport("artifacts.dir", "目录不存在，跳过：" + dir);
   } else {
@@ -95,7 +97,7 @@ if (process.argv.includes("--artifacts")) {
         const arr = Array.isArray(info) ? info : [info];
         for (const it of arr) {
           if (it.k === "ERROR") { warnReport("artifacts." + it.file, "属性读取失败：" + it.v); continue; }
-          if (it.k === "ProductName") report(it.v === expectProduct, "artifact.productName:" + it.file, "期望 " + expectProduct + " 实际 " + it.v);
+          if (it.k === "ProductName") report(it.v === expectProductFor(it.file), "artifact.productName:" + it.file, "期望 " + expectProductFor(it.file) + " 实际 " + it.v);
           if (it.k === "Manufacturer" || it.k === "CompanyName") report(!ac.forbidAuthorExact.includes(it.v), "artifact.author:" + it.file, "作者字段为裸 mark（应为 NOTICE 归属 mark / yibiaoai）");
           if (it.k === "LegalCopyright") report(!ac.forbidCopyrightExact.includes(it.v), "artifact.copyright:" + it.file, "版权行仍为裸 mark");
         }

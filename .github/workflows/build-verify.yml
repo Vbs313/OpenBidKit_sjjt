@@ -66,7 +66,7 @@ jobs:
         # 若仍失败，降级为 --config.win.signAndEditExecutable=false（仅验证用途，不用于发布产物）
         env:
           USE_HARD_LINKS: "false"
-        run: npx electron-builder --win msi --publish never --config.npmRebuild=false
+        run: npx electron-builder --win msi --publish never --config.npmRebuild=false -c.productName=DataGroupBidKit
 
       - name: Verify artifact branding and attribution (FAIL must be 0)
         shell: bash
