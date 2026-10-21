@@ -80,6 +80,36 @@ function ensurePyInstaller(python) {
 // macOS 的 _internal/Python 是符号链接（指向 Python.framework/...）。
 // cpSync 的 dereference 在部分 Node 版本上仍会保留链接或丢掉目标，这里做一次兜底：
 // 确保复制后是可直接 dlopen 的常规文件；若缺失，就在构建目录里搜 Python.framework 的实体并补拷。
+// cpSync 在部分 Node 版本上不会 dereference 指向文件的符号链接；
+// PyInstaller 的 macOS 产物大量使用链接（_internal/Python、Python.framework/Python、
+// Versions/Current 等）。这里统一把输出目录里的所有符号链接实体化，
+// 避免 scratch 删除后悬空、也避免打包进 app 后再报 ENOENT。
+function materializeSymlinks(rootDir) {
+  const walk = (dir) => {
+    let entries = [];
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isSymbolicLink()) {
+        let real = '';
+        try { real = fs.realpathSync(full); } catch { continue; }
+        let stat = null;
+        try { stat = fs.statSync(real); } catch { continue; }
+        try { fs.rmSync(full, { force: true }); } catch { continue; }
+        if (stat.isDirectory()) {
+          fs.cpSync(real, full, { recursive: true, dereference: true });
+        } else {
+          fs.copyFileSync(real, full);
+          try { fs.chmodSync(full, stat.mode & 0o777); } catch {}
+        }
+      } else if (entry.isDirectory()) {
+        walk(full);
+      }
+    }
+  };
+  walk(rootDir);
+}
+
 function ensurePythonLibFile(outputDir, builtDir) {
   const target = path.join(outputDir, '_internal', 'Python');
 
@@ -208,6 +238,7 @@ function buildTarget(platform, arch) {
       }
     }
     fs.cpSync(builtDir, outputDir, { recursive: true, dereference: true });
+    materializeSymlinks(outputDir);
     if (hadPythonLib) {
       ensurePythonLibFile(outputDir, builtDir);
     }
