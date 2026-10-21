@@ -15,9 +15,9 @@ DefaultDirName={localappdata}\数据集团工具箱
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
-; 说明：Inno 6.7 起 x64 已弃用（会被替换为 x64os），评审时可改为 x64compatible；本版按迁移规格保留 x64
-ArchitecturesAllowed=x64
-ArchitecturesInstallIn64BitMode=x64
+; Inno 6.7 起 x64 已弃用，按评审结论使用 x64compatible
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\..\..\release\inno
 OutputBaseFilename=数据集团工具箱-Setup-{#MyAppVersion}
 Compression=lzma2

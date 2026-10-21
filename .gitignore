@@ -14,6 +14,10 @@ uploads/
 # 构建和打包相关
 dist/
 build/
+# 例外：Inno Setup 安装脚本属于源码（client/build/installer），纳入版本控制
+!client/build/
+!client/build/installer/
+!client/build/installer/**
 *.spec
 requirements_build.txt
 
